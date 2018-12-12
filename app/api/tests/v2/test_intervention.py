@@ -101,6 +101,15 @@ class RedFlagTestCase(unittest.TestCase):
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
 
+    def test_post_redflag(self):
+        response = self.client.post(
+            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data)
+        )
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertIn('Created intervention record', str(result))
+
+
 
 
 
