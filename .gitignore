@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+
+# Flask stuff:
+# instance/
+
+
+# Environments
+env/
+
+.vscode/
