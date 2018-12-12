@@ -98,3 +98,52 @@ class Intervention(Resource):
                     "message": "intervention record does not exist."
                 }]}, 404
 
+
+class Updatecomment(Resource):
+    def patch(self, intervention_id):
+        paserrr = reqparse.RequestParser(bundle_errors=True)
+        paserrr.add_argument('comment',
+                             type=valid_characters,
+                             required=True,
+                             help="comment field cannt be left blank or"
+                             "{error_msg},400"
+                             )
+        paserrr.parse_args()
+        data = request.get_json(silent=True)
+        comment = data["comment"]
+        patched = (comment, intervention_id)
+        intervention = db.findOne(intervention_id)
+        if intervention:
+            db.update_intervention_comment(patched)
+            return{"status": 200, "data":
+                   [{"id": intervention_id, "message":
+                     "Updated intervention's comment"}]}, 200
+        return {"status": 404,
+                "data": [{
+                    "message": "intervention record does not exist."
+                }]}, 404
+
+
+class Updatelocation(Resource):
+    def patch(self, intervention_id):
+        paserr = reqparse.RequestParser(bundle_errors=True)
+        paserr.add_argument('location',
+                            type=valid_characters,
+                            required=True,
+                            help="location field cannt be left blank or"
+                            "{error_msg},400"
+                            )
+        paserr.parse_args()
+        data = request.get_json(silent=True)
+        location = data["location"]
+        patched = (location, intervention_id)
+        intervention = db.findOne(intervention_id)
+        if intervention:
+            db.update_intervention_location(patched)
+            return{"status": 200, "data":
+                   [{"id": intervention_id, "message":
+                     "Updated intervention's location"}]}, 200
+        return {"status": 404,
+                "data": [{
+                    "message": "intervention record does not exist."
+                }]}, 404
