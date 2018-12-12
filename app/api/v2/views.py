@@ -69,3 +69,17 @@ class Interventions(Resource):
         db.create_intervention_record(posted)
         return{"status": 201, "data": [{"id": data['id'],
                                         "message":"Created intervention record"}]}, 201
+
+
+class Intervention(Resource):
+    def get(self, intervention_id):
+        intervention = db.get_specific_intervention_record(intervention_id)
+        if intervention:
+            return make_response(jsonify({
+                "status": 200,
+                "data": intervention
+            }), 200)
+        return {"status": 404,
+                "data": [{
+                    "message": "intervention record does not exist."
+                }]}, 404
