@@ -229,3 +229,48 @@ class AdminupdateRedflagstatus(Resource):
                 "data": [{
                     "message": "intervention record does not exist."
                 }]}, 404
+
+
+class Signup(Resource):
+    def post(self):
+        parser = reqparse.RequestParser(bundle_errors=True)
+
+        parser.add_argument("username",
+                            type=str,
+                            required=True,
+                            help="Username field is required.")
+        parser.add_argument("password",
+                            type=str,
+                            required=True,
+                            help="Password field is required.")
+        parser.add_argument("email",
+                            type=str,
+                            required=True,
+                            help="Email field is required.")
+        parser.add_argument("firstname",
+                            type=str,
+                            help="Firstname field is optional.")
+        parser.add_argument("lastname",
+                            type=str,
+                            help="Lastname field is optional.")
+        parser.add_argument("phoneNumber",
+                            type=int,
+                            help="Phone number field is optional.")
+
+        args = parser.parse_args()
+        data = request.get_json(silent=True)
+        username = data["username"]
+        password = data["password"]
+        email = data["email"]
+        firstname = data["firstname"]
+        lastname = data["lastname"]
+        valid_data = db.register_user(username, password, email)
+        if valid_data:
+            access_token = create_access_token(identity=password)
+            posted = (data['firstname'], data['lastname'],
+                      data['othername'], email, data['phoneNumber'],
+                      username, password)
+            db.save_user_details(posted)
+            return{"status": 201, "data":
+                   [{"token": access_token, "user": data}]}, 201
+        return {"message": "Bad credentials.Signup failed"}, 400

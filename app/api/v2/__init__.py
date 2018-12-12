@@ -1,12 +1,13 @@
 from flask_restful import Api, Resource
 from flask import Blueprint
-from .views import Interventions, AdminUpdatesInterventiontatus, Intervention, AdminupdateRedflagstatus, Updatelocation, Updatecomment
+from .views import Interventions, AdminUpdatesInterventiontatus, Intervention,Signup,AdminupdateRedflagstatus, Updatelocation, Updatecomment
 
 version_two = Blueprint('api_v2', __name__, url_prefix='/api/v2')
 api = Api(version_two)
 api.add_resource(Updatelocation,
                  '/interventions/<int:intervention_id>/location')
 api.add_resource(Updatecomment, '/interventions/<int:intervention_id>/comment')
+api.add_resource(Signup, '/auth/signup')
 api.add_resource(AdminUpdatesInterventiontatus,
                  '/interventions/<int:intervention_id>/status')
 api.add_resource(AdminupdateRedflagstatus,
