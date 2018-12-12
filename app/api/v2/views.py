@@ -3,6 +3,7 @@ import re
 from flask_restful import Resource, reqparse
 from flask import jsonify, make_response, request
 from .models import Model
+from flask_jwt_extended import(JWTManager, jwt_required, create_access_token)
 
 
 db = Model()
@@ -51,6 +52,12 @@ PARSER.add_argument('comment',
                     required=True,
                     help="comment field cannt be left blank or {error_msg},400"
                     )
+
+
+class ImplementJt(Resource):
+    @jwt_required
+    def get(self):
+        return {"This is a Protected Route"}
 
 
 class Interventions(Resource):
