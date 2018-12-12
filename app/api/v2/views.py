@@ -147,3 +147,85 @@ class Updatelocation(Resource):
                 "data": [{
                     "message": "intervention record does not exist."
                 }]}, 404
+
+
+class AdminUpdatesInterventiontatus(Resource):
+    def patch(self, intervention_id):
+        paserr = reqparse.RequestParser(bundle_errors=True)
+        paserr.add_argument('type',
+                            type=str,
+                            required=True,
+                            choices=("Intervention"),
+                            help="type field cannot be left "
+                            "blank or Bad choice: {error_msg},400"
+                            )
+        paserr.add_argument('isAdmin',
+                            type=str,
+                            required=True,
+                            choices=("True", "False"),
+                            help="Only Admin users allowed"
+                            " or Bad choice: {error_msg},400"
+                            )
+        paserr.add_argument('status',
+                            type=str,
+                            required=True,
+                            choices=("under investigation",
+                                     "rejected", "resolved"),
+                            help="status field cannot be left "
+                            "blank or Bad choice: {error_msg},400"
+                            )
+        paserr.parse_args()
+        data = request.get_json(silent=True)
+        status = data["status"]
+        patched = (status, intervention_id)
+        intervention = db.findOne(intervention_id)
+        if intervention:
+            db.update_intervention_status(patched)
+            return{"status": 200, "data":
+                   [{"id": intervention_id, "message":
+                     "Updated intervention record status"}]}, 200
+        return {"status": 404,
+                "data": [{
+                    "message": "intervention record does not exist."
+                }]}, 404
+
+
+class AdminupdateRedflagstatus(Resource):
+    def patch(self, intervention_id):
+        paserr = reqparse.RequestParser(bundle_errors=True)
+        paserr.add_argument('type',
+                            type=str,
+                            required=True,
+                            choices=("Redflag"),
+                            help="type field cannot be left "
+                            "blank or Bad choice: {error_msg},400"
+                            )
+        paserr.add_argument('isAdmin',
+                            type=str,
+                            required=True,
+                            choices=("True", "False"),
+                            help="Only Admin users allowed "
+                            "or Bad choice: {error_msg},400"
+                            )
+        paserr.add_argument('status',
+                            type=str,
+                            required=True,
+                            choices=("under investigation",
+                                     "rejected", "resolved"),
+                            help="status field cannot be left "
+                            "blank or Bad choice: {error_msg},400"
+                            )
+        paserr.parse_args()
+        data = request.get_json(silent=True)
+        status = data["status"]
+        patched = (status, intervention_id)
+        intervention = db.findOne(intervention_id)
+        if intervention:
+            db.update_redflag_status(patched)
+            return{"status": 200, "data":
+                   [{"id": intervention_id, "message":
+                     "Updated redflag record status"}]}, 200
+        return {"status": 404,
+                "data": [{
+                    "message": "intervention record does not exist."
+                }]}, 404

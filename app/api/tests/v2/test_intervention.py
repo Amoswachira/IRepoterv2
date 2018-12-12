@@ -149,6 +149,32 @@ class RedFlagTestCase(unittest.TestCase):
         self.assertEqual(response2.status_code, 200)
         self.assertIn("Updated intervention's comment", str(result))
     
+    def test_update_redflag_status(self):
+        response = self.client.post(
+            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data6)
+        )
+        response2 = self.client.patch(
+            URL_REDSTATUS, headers=HEADERS, data=json.dumps(
+                self.redflagpatch
+            )
+        )
+        result = json.loads(response2.data)
+        self.assertEqual(response2.status_code, 200)
+        self.assertIn("Updated redflag record status", str(result))
+
+    def test_update_intervention_status(self):
+        response = self.client.post(
+            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data7)
+        )
+        response2 = self.client.patch(
+            URL_INTESTATUS, headers=HEADERS, data=json.dumps(
+                self.interventionpatch
+            )
+        )
+        result = json.loads(response2.data)
+        self.assertEqual(response2.status_code, 200)
+        self.assertIn("Updated intervention record status", str(result))
+    
     def test_delete_one_redflag(self):
         response = self.client.post(
             URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data5)
