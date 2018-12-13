@@ -184,11 +184,6 @@ class RedFlagTestCase(unittest.TestCase):
         self.assertEqual(response2.status_code, 200)
         self.assertIn('Intervention record has been deleted', str(result))
 
-
-
-
-
-
     database.drop_tables()
 
 

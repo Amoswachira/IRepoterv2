@@ -207,3 +207,42 @@ class Model():
         con = self.connect()
         cursor = con.cursor()
         return self.cursor.fetchall()
+
+    def register_user(self, username, password, email):
+        """method to sign up a user"""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT username FROM users\
+                         WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        if user is not None:
+            return False
+        cursor.execute("SELECT password FROM users\
+                         WHERE password = %s", (password,))
+        pass_word = cursor.fetchone()
+        if pass_word is not None:
+            return False
+        cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
+        mail = cursor.fetchone()
+        cursor.close()
+        con.commit()
+        con.close()
+        if mail is not None:
+            return False
+        return True
+
+    def login_user(self, username, password):
+        """method to login a user."""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT username,password \
+                        FROM users WHERE password = %s", (password,))
+        logincredentials = cursor.fetchone()
+        cursor.close()
+        con.commit()
+        con.close()
+        if username != logincredentials[0]:
+            return {"message": "Invalid Username.Please try again"}, 400
+        if password != logincredentials[1]:
+            return {"message": "Invalid Password.Please try again"}, 400
+        return True

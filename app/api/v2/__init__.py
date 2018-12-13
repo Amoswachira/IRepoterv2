@@ -14,6 +14,6 @@ api.add_resource(AdminUpdatesInterventiontatus,
 api.add_resource(AdminupdateRedflagstatus,
                  '/interventions/<int:intervention_id>/status-red')
 api.add_resource(Interventions, '/interventions')
-api.add_resource(ImplementJt, '/testjwt')
+api.add_resource(ImplementJt, '/test')
 api.add_resource(Intervention, '/intervention/<int:intervention_id>')
 api.add_resource(Login, '/auth/login')
