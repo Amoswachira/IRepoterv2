@@ -1,7 +1,6 @@
 import unittest
 import json
 from app import create_app
-# from ....api import v2
 from ....api.v2.models import Model
 app = create_app()
 database = Model()
