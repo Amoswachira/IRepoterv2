@@ -4,19 +4,10 @@ import psycopg2.extras
 import os
 
 
-# DB_HOST = 'localhost'
-# DB_USERNAME = 'postgres'
-# DB_PASS = 'password'
-# DB_NAME = 'andelaapiv2'
-# DB_PORT = '5432'
-
 # Database url
 url = "dbname='andelaapiv2' host='localhost'\
              port='5432' user='postgres' password='password'"
 
-# Testing Database
-test_url = "dbname='test' host='localhost'\
-             port='5432' user='postgres' password='password'"
 
 
 class Model():
