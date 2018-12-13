@@ -1,3 +1,3 @@
 web: gunicorn run:app
 heroku ps:scale web=1
-heroku addons:create heroku-postgresql:andelaapiv2
+heroku-postgresql:hobby-dev
