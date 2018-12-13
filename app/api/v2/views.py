@@ -57,7 +57,7 @@ PARSER.add_argument('comment',
 class ImplementJt(Resource):
     @jwt_required
     def get(self):
-        return {"This is a Protected Route"}
+        return {"meassge":"This is a Protected Route"}
 
 
 class Interventions(Resource):
