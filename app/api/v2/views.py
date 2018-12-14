@@ -274,3 +274,28 @@ class Signup(Resource):
             return{"status": 201, "data":
                    [{"token": access_token, "user": data}]}, 201
         return {"message": "Bad credentials.Signup failed"}, 400
+
+
+class Login(Resource):
+    def post(self):
+        parser = reqparse.RequestParser(bundle_errors=True)
+
+        parser.add_argument("username",
+                            type=str,
+                            required=True,
+                            help="Username field is required.")
+        parser.add_argument("password",
+                            type=str,
+                            required=True,
+                            help="Password field is required.")
+        args = parser.parse_args()
+        data = request.get_json(silent=True)
+        username = data["username"]
+        password = data["password"]
+        valid_data = db.login_user(username, password)
+        if valid_data:
+            access_token = create_access_token(identity=password)
+            return{"status": 200, "data":
+                   [{"token": access_token, "user": data}]}, 200
+        return {"message": "Bad credentials.Login failed"}, 400
+
