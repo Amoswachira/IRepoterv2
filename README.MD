@@ -1,7 +1,7 @@
-# IRepoter
+# IRepoter [![Build Status](https://travis-ci.org/Amoswachira/IRepoterv2.svg?branch=develop)](https://travis-ci.org/Amoswachira/IRepoterv2) [![codecov](https://codecov.io/gh/Amoswachira/IRepoterv2/branch/develop/graph/badge.svg)](https://codecov.io/gh/Amoswachira/IRepoterv2) [![Maintainability](https://api.codeclimate.com/v1/badges/0eb0eb7c71f70e024eca/maintainability)](https://codeclimate.com/github/Amoswachira/IRepoterv2/maintainability)
 Corruption is a huge bane to Africa’s development. African countries must develop novel and localised solutions that will curb this menace, hence the birth of iReporter. iReporter enables any/every citizen to bring any form of corruption to the notice of appropriate authorities and the general public. Users can also report on things that needs government intervention
 
-[![Build Status](https://travis-ci.org/Amoswachira/IRepoterv2.svg?branch=develop)](https://travis-ci.org/Amoswachira/IRepoterv2) [![codecov](https://codecov.io/gh/Amoswachira/IRepoterv2/branch/develop/graph/badge.svg)](https://codecov.io/gh/Amoswachira/IRepoterv2) [![Maintainability](https://api.codeclimate.com/v1/badges/0eb0eb7c71f70e024eca/maintainability)](https://codeclimate.com/github/Amoswachira/IRepoterv2/maintainability)
+
 
 ### MAIN FEATURES
 - user can Register and create an account
