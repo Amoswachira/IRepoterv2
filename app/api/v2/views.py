@@ -60,3 +60,12 @@ class Interventions(Resource):
             "status": 200,
             "data": interventions
         }), 200)
+    
+    def post(self):
+        PARSER.parse_args()
+        data = request.get_json(silent=True)
+        posted = (data['id'], data['type'], data['location'],
+                  data['Images'], data['Videos'], data['comment'])
+        db.create_intervention_record(posted)
+        return{"status": 201, "data": [{"id": data['id'],
+                                        "message":"Created intervention record"}]}, 201
