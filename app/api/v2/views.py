@@ -117,7 +117,8 @@ class Updatecomment(Resource):
                              "{error_msg},400"
                              )
         
-        data = paserrr.parse_args()
+        paserrr.parse_args()
+        data = request.get_json(silent=True)
         comment = data["comment"]
         patched = (comment, intervention_id)
         intervention = db.findOne(intervention_id)
