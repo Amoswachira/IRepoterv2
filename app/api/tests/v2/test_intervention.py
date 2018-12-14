@@ -122,6 +122,15 @@ class RedFlagTestCase(unittest.TestCase):
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
         self.assertIn("intervention record does not exist.", str(result))
+    
+    def test_delete_one_redflag(self):
+        response = self.client.post(
+            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data5)
+        )
+        response2 = self.client.delete(URL_REDFLAGS_IDD)
+        result = json.loads(response2.data)
+        self.assertEqual(response2.status_code, 200)
+        self.assertIn('Intervention record has been deleted', str(result))
 
 
 

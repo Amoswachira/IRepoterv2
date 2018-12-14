@@ -83,3 +83,18 @@ class Intervention(Resource):
                 "data": [{
                     "message": "intervention record does not exist."
                 }]}, 404
+    
+    def delete(self, intervention_id):
+        intervention = db.findOne(intervention_id)
+        if intervention:
+            db.delete_specific_record(intervention_id)
+            return make_response(jsonify({
+                "status": 200,
+                "data": [{"id": intervention_id,
+                          "message": "Intervention record has been deleted"}]
+            }), 200)
+        return {"status": 404,
+                "data": [{
+                    "message": "intervention record does not exist."
+                }]}, 404
+
