@@ -2,7 +2,7 @@
 import psycopg2
 import psycopg2.extras
 import os
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Database url
 url = "dbname='andelaapiv2' host='localhost'\
@@ -39,7 +39,7 @@ class Model():
             email VARCHAR(50) UNIQUE NOT NULL,
             phoneNumber VARCHAR(25),
             username VARCHAR(25) UNIQUE NOT NULL,
-            password VARCHAR(50) UNIQUE NOT NULL,
+            pw_hash VARCHAR(250) UNIQUE NOT NULL,
             registered VARCHAR(200) default current_timestamp,
             isAdmin BOOLEAN DEFAULT 'false' NOT NULL )"""
         incidents = """CREATE TABLE IF NOT EXISTS incidents (
@@ -128,7 +128,7 @@ class Model():
         con = self.connect()
         cursor = con.cursor()
         sql = """INSERT INTO users(firstname, lastname, othername, email,
-                 phoneNumber, username, password) VALUES(%s, %s, %s, %s,
+                 phoneNumber, username, pw_hash) VALUES(%s, %s, %s, %s,
                  %s, %s, %s)"""
         cursor.execute(sql, posted)
         cursor.close()
@@ -199,7 +199,7 @@ class Model():
         cursor = con.cursor()
         return self.cursor.fetchall()
 
-    def register_user(self, username, password, email):
+    def validate_user_details(self, username, email):
         """method to sign up a user"""
         con = self.connect()
         cursor = con.cursor()
@@ -208,11 +208,7 @@ class Model():
         user = cursor.fetchone()
         if user is not None:
             return False
-        cursor.execute("SELECT password FROM users\
-                         WHERE password = %s", (password,))
-        pass_word = cursor.fetchone()
-        if pass_word is not None:
-            return False
+            
         cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
         mail = cursor.fetchone()
         cursor.close()
@@ -226,14 +222,17 @@ class Model():
         """method to login a user."""
         con = self.connect()
         cursor = con.cursor()
-        cursor.execute("SELECT username,password \
-                        FROM users WHERE password = %s", (password,))
+        cursor.execute("SELECT username,pw_hash \
+                        FROM users WHERE username = %s", (username,))
         logincredentials = cursor.fetchone()
         cursor.close()
         con.commit()
         con.close()
+
+        if logincredentials is None:
+            return False
         if username != logincredentials[0]:
-            return {"message": "Invalid Username.Please try again"}, 400
-        if password != logincredentials[1]:
-            return {"message": "Invalid Password.Please try again"}, 400
+            return False
+        if not check_password_hash(logincredentials[1], password):
+            return False
         return True
