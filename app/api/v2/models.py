@@ -2,21 +2,12 @@
 import psycopg2
 import psycopg2.extras
 import os
-
-
-# DB_HOST = 'localhost'
-# DB_USERNAME = 'postgres'
-# DB_PASS = 'password'
-# DB_NAME = 'andelaapiv2'
-# DB_PORT = '5432'
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Database url
 url = "dbname='andelaapiv2' host='localhost'\
              port='5432' user='postgres' password='password'"
 
-# Testing Database
-test_url = "dbname='test' host='localhost'\
-             port='5432' user='postgres' password='password'"
 
 
 class Model():
@@ -48,7 +39,7 @@ class Model():
             email VARCHAR(50) UNIQUE NOT NULL,
             phoneNumber VARCHAR(25),
             username VARCHAR(25) UNIQUE NOT NULL,
-            password VARCHAR(50) UNIQUE NOT NULL,
+            pw_hash VARCHAR(250) UNIQUE NOT NULL,
             registered VARCHAR(200) default current_timestamp,
             isAdmin BOOLEAN DEFAULT 'false' NOT NULL )"""
         incidents = """CREATE TABLE IF NOT EXISTS incidents (
@@ -137,7 +128,7 @@ class Model():
         con = self.connect()
         cursor = con.cursor()
         sql = """INSERT INTO users(firstname, lastname, othername, email,
-                 phoneNumber, username, password) VALUES(%s, %s, %s, %s,
+                 phoneNumber, username, pw_hash) VALUES(%s, %s, %s, %s,
                  %s, %s, %s)"""
         cursor.execute(sql, posted)
         cursor.close()
@@ -207,3 +198,41 @@ class Model():
         con = self.connect()
         cursor = con.cursor()
         return self.cursor.fetchall()
+
+    def validate_user_details(self, username, email):
+        """method to sign up a user"""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT username FROM users\
+                         WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        if user is not None:
+            return False
+            
+        cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
+        mail = cursor.fetchone()
+        cursor.close()
+        con.commit()
+        con.close()
+        if mail is not None:
+            return False
+        return True
+
+    def login_user(self, username, password):
+        """method to login a user."""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT username,pw_hash \
+                        FROM users WHERE username = %s", (username,))
+        logincredentials = cursor.fetchone()
+        cursor.close()
+        con.commit()
+        con.close()
+
+        if logincredentials is None:
+            return False
+        if username != logincredentials[0]:
+            return False
+        if not check_password_hash(logincredentials[1], password):
+            return False
+        return True

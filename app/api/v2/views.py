@@ -3,6 +3,8 @@ import re
 from flask_restful import Resource, reqparse
 from flask import jsonify, make_response, request
 from .models import Model
+from flask_jwt_extended import(JWTManager, jwt_required, create_access_token)
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 db = Model()
@@ -51,6 +53,12 @@ PARSER.add_argument('comment',
                     required=True,
                     help="comment field cannt be left blank or {error_msg},400"
                     )
+
+
+class ImplementJt(Resource):
+    @jwt_required
+    def get(self):
+        return {"meassge":"This is a Protected Route"}
 
 
 class Interventions(Resource):
@@ -108,6 +116,7 @@ class Updatecomment(Resource):
                              help="comment field cannt be left blank or"
                              "{error_msg},400"
                              )
+        
         paserrr.parse_args()
         data = request.get_json(silent=True)
         comment = data["comment"]
@@ -133,8 +142,8 @@ class Updatelocation(Resource):
                             help="location field cannt be left blank or"
                             "{error_msg},400"
                             )
-        paserr.parse_args()
-        data = request.get_json(silent=True)
+        
+        data = paserr.parse_args()
         location = data["location"]
         patched = (location, intervention_id)
         intervention = db.findOne(intervention_id)
@@ -174,8 +183,8 @@ class AdminUpdatesInterventiontatus(Resource):
                             help="status field cannot be left "
                             "blank or Bad choice: {error_msg},400"
                             )
-        paserr.parse_args()
-        data = request.get_json(silent=True)
+        
+        data = paserr.parse_args()
         status = data["status"]
         patched = (status, intervention_id)
         intervention = db.findOne(intervention_id)
@@ -215,8 +224,8 @@ class AdminupdateRedflagstatus(Resource):
                             help="status field cannot be left "
                             "blank or Bad choice: {error_msg},400"
                             )
-        paserr.parse_args()
-        data = request.get_json(silent=True)
+        
+        data = paserr.parse_args()
         status = data["status"]
         patched = (status, intervention_id)
         intervention = db.findOne(intervention_id)
@@ -256,24 +265,26 @@ class Signup(Resource):
         parser.add_argument("phoneNumber",
                             type=int,
                             help="Phone number field is optional.")
+        parser.add_argument("othername",
+                            type=str,
+                            help="othername field is optional.")
 
-        args = parser.parse_args()
-        data = request.get_json(silent=True)
-        username = data["username"]
-        password = data["password"]
+        data = parser.parse_args()
+        username, password = data["username"], data["password"]
+        pw_hash = generate_password_hash(password)
         email = data["email"]
         firstname = data["firstname"]
         lastname = data["lastname"]
-        valid_data = db.register_user(username, password, email)
+        valid_data = db.validate_user_details(username, email)
         if valid_data:
-            access_token = create_access_token(identity=password)
+            access_token = create_access_token(identity=username)
             posted = (data['firstname'], data['lastname'],
                       data['othername'], email, data['phoneNumber'],
-                      username, password)
+                      username, pw_hash)
             db.save_user_details(posted)
             return{"status": 201, "data":
                    [{"token": access_token, "user": data}]}, 201
-        return {"message": "Bad credentials.Signup failed"}, 400
+        return {"message": "check your sign up credentials .Signup failed"}, 400
 
 
 class Login(Resource):
@@ -288,14 +299,11 @@ class Login(Resource):
                             type=str,
                             required=True,
                             help="Password field is required.")
-        args = parser.parse_args()
-        data = request.get_json(silent=True)
-        username = data["username"]
-        password = data["password"]
-        valid_data = db.login_user(username, password)
-        if valid_data:
-            access_token = create_access_token(identity=password)
+        data = parser.parse_args()
+        username, password = data["username"], data["password"]
+        valid_login = db.login_user(username, password)
+        if valid_login:
+            access_token = create_access_token(identity=username)
             return{"status": 200, "data":
                    [{"token": access_token, "user": data}]}, 200
         return {"message": "Bad credentials.Login failed"}, 400
-

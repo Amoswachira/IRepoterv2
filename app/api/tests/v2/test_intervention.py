@@ -1,7 +1,6 @@
 import unittest
 import json
 from app import create_app
-# from ....api import v2
 from ....api.v2.models import Model
 app = create_app()
 database = Model()
@@ -183,11 +182,6 @@ class RedFlagTestCase(unittest.TestCase):
         result = json.loads(response2.data)
         self.assertEqual(response2.status_code, 200)
         self.assertIn('Intervention record has been deleted', str(result))
-
-
-
-
-
 
     database.drop_tables()
 

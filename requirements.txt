@@ -3,11 +3,15 @@ appdirs==1.4.3
 astroid==2.1.0
 atomicwrites==1.2.1
 attrs==18.2.0
+bcrypt==3.1.5
 black==18.9b0
+cffi==1.11.5
 Click==7.0
 colorama==0.4.1
 coverage==4.5.2
 Flask==1.0.2
+Flask-Bcrypt==0.7.1
+flask-heroku==0.1.9
 Flask-JWT-Extended==3.14.0
 Flask-RESTful==0.3.6
 gunicorn==19.9.0
@@ -25,6 +29,7 @@ pluggy==0.8.0
 psycopg2==2.7.6.1
 psycopg2-binary==2.7.6.1
 py==1.7.0
+pycparser==2.19
 PyJWT==1.7.1
 pylint==2.2.0
 pytest==4.0.1
