@@ -1,3 +1,4 @@
+"""unittests"""
 import unittest
 import json
 from app import create_app
@@ -5,19 +6,20 @@ from ....api.v2.models import Model
 app = create_app()
 database = Model()
 
-HEADERS = {'Content-Type': 'application/json'}
+
 URL_REDFLAGS = "/api/v2/interventions"
-URL_REDFLAGS_ID = "/api/v2/intervention/2"
-URL_REDFLAGS_IDD = "/api/v2/intervention/5"
+URL_REDFLAGS_ID = "/api/v2/intervention/1"
+URL_REDFLAGS_IDD = "/api/v2/intervention/1"
 URL_REDFLAGS_IDS = "/api/v2/intervention/1168878781"
-URL_LOCATION = "/api/v2/interventions/3/location"
-URL_COMMENT = "/api/v2/interventions/4/comment"
-URL_REDSTATUS = "/api/v2/interventions/6/status-red"
-URL_INTESTATUS = "/api/v2/interventions/7/status"
+URL_LOCATION = "/api/v2/interventions/1/location"
+URL_COMMENT = "/api/v2/interventions/1/comment"
+URL_REDSTATUS = "/api/v2/redflag/1/status"
+URL_INTESTATUS = "/api/v2/interventions/1/status"
+URL_SIGNUP = "/api/v2/auth/signup"
 
 
 class RedFlagTestCase(unittest.TestCase):
-
+    """class methods for testing"""
     def setUp(self):
         database.drop_tables()
         database.create_tables()
@@ -25,60 +27,53 @@ class RedFlagTestCase(unittest.TestCase):
         self.app = create_app()
         self.client = self.app.test_client()
         self.data = {
-            "id": "1",
             "type": "Redflag",
-            "location": "naxs",
+            "location":"13N,67E",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df"
         }
         self.data2 = {
-            "id": "2",
             "type": "Redflag",
-            "location": "naxs",
+            "location":"13N,67E",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df"
         }
         self.data3 = {
-            "id": "3",
             "type": "Intervention",
-            "location": "naxs",
+            "location": "13N,67E",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df",
             "status": "draft"
         }
         self.data4 = {
-            "id": "4",
             "type": "Redflag",
-            "location": "naxs",
+            "location": "13N,67E",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df",
             "status": "draft"
         }
         self.data5 = {
-            "id": "5",
             "type": "Redflag",
-            "location": "naxs",
+            "location": "13N,67E",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df"
         }
         self.data6 = {
-            "id": "6",
             "type": "Redflag",
-            "location": "naxs",
+            "location": "13N,67E",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df",
             "status": "draft"
         }
         self.data7 = {
-            "id": "7",
             "type": "Intervention",
-            "location": "naxs",
+            "location": "13N,67E",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df",
@@ -86,49 +81,79 @@ class RedFlagTestCase(unittest.TestCase):
         }
         self.redflagpatch = {
             "type": "Redflag",
-            "isAdmin": "True",
             "status": "under investigation"
         }
         self.interventionpatch = {
             "type": "Intervention",
-            "isAdmin": "True",
             "status": "under investigation"
         }
+        self.user = {
+            "firstname": "Admin",
+            "lastname": "Admin",
+            "othername": "Admin",
+            "email": "Admin@gmail.com",
+            "phoneNumber": "123456789",
+            "username": "Admin",
+            "password": "Admin"
+            
+        }
+
+        response = self.client.post(
+            URL_SIGNUP, data=json.dumps(self.user), headers={'Content-Type': 'application/json'})
+        result = json.loads(response.data)
+        self.token = result['data'][0]['token']
+        self.access = "Bearer {}".format(self.token)
+        self.assertEqual(response.status_code, 201)
 
     def test_get_redflags(self):
-        response = self.client.get(URL_REDFLAGS)
+        """test get method for getting interventions"""
+        response = self.client.get(URL_REDFLAGS, headers={
+                                   'Content-Type': 'application/json'
+                                   , "Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
 
     def test_post_redflag(self):
+        """test the post method"""
         response = self.client.post(
-            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data)
+            URL_REDFLAGS, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps(self.data)
         )
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 201)
         self.assertIn('Created intervention record', str(result))
-    
+
     def test_get_one_redflag(self):
+        """"test method to get one record by id"""
         response = self.client.post(
-            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data2)
+            URL_REDFLAGS, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps(self.data2)
         )
-        response2 = self.client.get(URL_REDFLAGS_ID)
+        response2 = self.client.get(URL_REDFLAGS_ID, headers={
+                                    'Content-Type': 'application/json'
+                                    , "Authorization": self.access})
         result = json.loads(response2.data)
         self.assertEqual(response2.status_code, 200)
 
     def test_redflag_not_found(self):
-        response = self.client.get(URL_REDFLAGS_IDS)
+        """test for not found record"""
+        response = self.client.get(URL_REDFLAGS_IDS, headers={
+                                   'Content-Type': 'application/json'
+                                   , "Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
         self.assertIn("intervention record does not exist.", str(result))
-    
+
     def test_update_location_of_one_redflag(self):
+        """test patch method for location"""
         response = self.client.post(
-            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data3)
+            URL_REDFLAGS, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps(self.data3)
         )
         response2 = self.client.patch(
-            URL_LOCATION, headers=HEADERS, data=json.dumps({
-                "location": "Kisumu"
+            URL_LOCATION, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps({
+                "location": "13N,67E"
             })
         )
         result = json.loads(response2.data)
@@ -136,24 +161,30 @@ class RedFlagTestCase(unittest.TestCase):
         self.assertIn("Updated intervention's location", str(result))
 
     def test_update_comment_of_one_redflag(self):
+        """test patch method for comment field by id"""
         response = self.client.post(
-            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data4)
+            URL_REDFLAGS, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps(self.data4)
         )
         response2 = self.client.patch(
-            URL_COMMENT, headers=HEADERS, data=json.dumps({
+            URL_COMMENT, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps({
                 "comment": "curruption"
             })
         )
         result = json.loads(response2.data)
         self.assertEqual(response2.status_code, 200)
         self.assertIn("Updated intervention's comment", str(result))
-    
+
     def test_update_redflag_status(self):
+        """test patch for redflag status"""
         response = self.client.post(
-            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data6)
+            URL_REDFLAGS, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps(self.data6)
         )
         response2 = self.client.patch(
-            URL_REDSTATUS, headers=HEADERS, data=json.dumps(
+            URL_REDSTATUS, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps(
                 self.redflagpatch
             )
         )
@@ -162,23 +193,30 @@ class RedFlagTestCase(unittest.TestCase):
         self.assertIn("Updated redflag record status", str(result))
 
     def test_update_intervention_status(self):
+        """test patch for intervention status"""
         response = self.client.post(
-            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data7)
+            URL_REDFLAGS, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps(self.data7)
         )
         response2 = self.client.patch(
-            URL_INTESTATUS, headers=HEADERS, data=json.dumps(
+            URL_INTESTATUS, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps(
                 self.interventionpatch
             )
         )
         result = json.loads(response2.data)
         self.assertEqual(response2.status_code, 200)
         self.assertIn("Updated intervention record status", str(result))
-    
+
     def test_delete_one_redflag(self):
+        """"test delete method of one redflag"""
         response = self.client.post(
-            URL_REDFLAGS, headers=HEADERS, data=json.dumps(self.data5)
+            URL_REDFLAGS, headers={'Content-Type': 'application/json'
+            , "Authorization": self.access}, data=json.dumps(self.data5)
         )
-        response2 = self.client.delete(URL_REDFLAGS_IDD)
+        response2 = self.client.delete(URL_REDFLAGS_IDD, headers={
+                                       'Content-Type': 'application/json'
+                                       , "Authorization": self.access})
         result = json.loads(response2.data)
         self.assertEqual(response2.status_code, 200)
         self.assertIn('Intervention record has been deleted', str(result))

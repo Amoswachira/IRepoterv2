@@ -60,5 +60,5 @@ on Windows, virtualenv creates a batch file
 | POST | api/v2/auth/signup             | Registration of new users             |
 | POST | api/v2/auth/login             | login in users             |
 | PATCH | /api/v2/interventions/9/status             | patch Intervention type status.             |
-| PATCH | /api/v2/interventions/8/status-red            | patch redflag status-red             |
+| PATCH | /api/v2/redflag/6/status            | patch redflag status-red             |
 
