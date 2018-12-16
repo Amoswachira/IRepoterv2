@@ -1,14 +1,18 @@
-import psycopg2
+"""views for the intervention contains all methods for get,post and patch"""
+from datetime import timedelta
 import re
 from flask_restful import Resource, reqparse
 from flask import jsonify, make_response, request
+from flask_jwt_extended import(
+    jwt_required, get_jwt_identity)
 from .models import Model
-from flask_jwt_extended import(JWTManager, jwt_required, create_access_token)
-from werkzeug.security import generate_password_hash, check_password_hash
 
 
-db = Model()
-db.create_tables()
+EXPIRES = timedelta(minutes=60)
+DB = Model()
+DB.create_tables()
+
+# validators
 
 
 def is_valid(value):
@@ -23,7 +27,17 @@ def valid_characters(value):
     if not re.match(r"[A-Za-z]", value):
         raise ValueError("contains special characters or numbers")
 
+
+def valid_location(value):
+    '''check if the location is valid
+    '''
+    if not re.match(r'^[0-9]{1,2}[NS],[0-9]{1,2}[EW]$', value):
+        raise ValueError(" ensure you location formatted as a "
+                         "latitude-longitude coordinate e.g '12N,67E'")
+
+
 # implement validation using reqparse
+
 
 PARSER = reqparse.RequestParser(bundle_errors=True)
 PARSER.add_argument('type',
@@ -35,9 +49,10 @@ PARSER.add_argument('type',
                     )
 
 PARSER.add_argument('location',
-                    type=valid_characters,
+                    type=valid_location,
                     required=True,
-                    help="location field cannt be left blank or {error_msg},400"
+                    help="location field cannt be left blank or"
+                    " {error_msg},400"
                     )
 PARSER.add_argument('images',
                     action='append',
@@ -55,52 +70,75 @@ PARSER.add_argument('comment',
                     )
 
 
-class ImplementJt(Resource):
+class Interventions(Resource):
+    """intevention class with get and post methods"""
     @jwt_required
     def get(self):
-        return {"meassge":"This is a Protected Route"}
+        """get method: gets all interventions for the current user """
+        current_user = get_jwt_identity()
+        identity = DB.check_current_user_all_incidents(current_user)
+        if identity:
+            interventions = DB.get_all_interventions_records(current_user)
+            return make_response(jsonify({
+                "status": 200,
+                "data": interventions
+            }), 200)
+        return{"message": "you dont have any Incidents yet."}
 
-
-class Interventions(Resource):
-    def get(self):
-        interventions = db.get_all_interventions_records()
-        return make_response(jsonify({
-            "status": 200,
-            "data": interventions
-        }), 200)
-    
+    @jwt_required
     def post(self):
+        """post method:posts interventions for the current user"""
         PARSER.parse_args()
         data = request.get_json(silent=True)
-        posted = (data['id'], data['type'], data['location'],
-                  data['Images'], data['Videos'], data['comment'])
-        db.create_intervention_record(posted)
-        return{"status": 201, "data": [{"id": data['id'],
+        current_user = get_jwt_identity()
+        posted = (data['type'], data['location'],
+                  data['Images'], data['Videos'], data['comment'],
+                  current_user)
+        DB.create_intervention_record(posted)
+        recent_id = DB.fetch_recent_id()
+        return{"status": 201, "data": [{"id": recent_id[0],
                                         "message":"Created intervention record"}]}, 201
 
 
 class Intervention(Resource):
+    """contains the get and delete by id methods """
+    @jwt_required
     def get(self, intervention_id):
-        intervention = db.get_specific_intervention_record(intervention_id)
+        """get method:fetchs the record of current user by id"""
+        intervention = DB.findOne(intervention_id)
+        current_user = get_jwt_identity()
         if intervention:
-            return make_response(jsonify({
-                "status": 200,
-                "data": intervention
-            }), 200)
+            check_user = (intervention_id, current_user)
+            identity = DB.check_current_user(check_user)
+            if identity:
+                intervention_s = DB.get_specific_intervention_record(
+                    intervention_id)
+                return make_response(jsonify({
+                    "status": 200,
+                    "data": intervention_s
+                }), 200)
+            return{"message": "Incident id not associated with current account."}
         return {"status": 404,
                 "data": [{
                     "message": "intervention record does not exist."
                 }]}, 404
-    
+
+    @jwt_required
     def delete(self, intervention_id):
-        intervention = db.findOne(intervention_id)
+        """delete method:deletes the record by id of the current user"""
+        intervention = DB.findOne(intervention_id)
+        current_user = get_jwt_identity()
         if intervention:
-            db.delete_specific_record(intervention_id)
-            return make_response(jsonify({
-                "status": 200,
-                "data": [{"id": intervention_id,
-                          "message": "Intervention record has been deleted"}]
-            }), 200)
+            check_user = (intervention_id, current_user)
+            identity = DB.check_current_user(check_user)
+            if identity:
+                DB.delete_specific_record(intervention_id)
+                return make_response(jsonify({
+                    "status": 200,
+                    "data": [{"id": intervention_id,
+                              "message": "Intervention record has been deleted"}]
+                }), 200)
+            return{"message": "Incident id not associated with current account."}
         return {"status": 404,
                 "data": [{
                     "message": "intervention record does not exist."
@@ -108,25 +146,33 @@ class Intervention(Resource):
 
 
 class Updatecomment(Resource):
+    """contains the patch by id method."""
+    @jwt_required
     def patch(self, intervention_id):
-        paserrr = reqparse.RequestParser(bundle_errors=True)
-        paserrr.add_argument('comment',
-                             type=valid_characters,
-                             required=True,
-                             help="comment field cannt be left blank or"
-                             "{error_msg},400"
-                             )
-        
-        paserrr.parse_args()
+        """pathch method:patch by id  the comment field of the current user"""
+        patch_comment = reqparse.RequestParser(bundle_errors=True)
+        patch_comment.add_argument('comment',
+                                   type=valid_characters,
+                                   required=True,
+                                   help="comment field cannt be left blank or"
+                                   "{error_msg},400"
+                                   )
+
+        patch_comment.parse_args()
         data = request.get_json(silent=True)
         comment = data["comment"]
         patched = (comment, intervention_id)
-        intervention = db.findOne(intervention_id)
+        intervention = DB.findOne(intervention_id)
+        current_user = get_jwt_identity()
         if intervention:
-            db.update_intervention_comment(patched)
-            return{"status": 200, "data":
-                   [{"id": intervention_id, "message":
-                     "Updated intervention's comment"}]}, 200
+            check_user = (intervention_id, current_user)
+            identity = DB.check_current_user(check_user)
+            if identity:
+                DB.update_intervention_comment(patched)
+                return{"status": 200, "data":
+                       [{"id": intervention_id, "message":
+                         "Updated intervention's comment"}]}, 200
+            return{"message": "Incident id not associated with current account."}
         return {"status": 404,
                 "data": [{
                     "message": "intervention record does not exist."
@@ -134,24 +180,33 @@ class Updatecomment(Resource):
 
 
 class Updatelocation(Resource):
+    """patch method for the location"""
+    @jwt_required
     def patch(self, intervention_id):
-        paserr = reqparse.RequestParser(bundle_errors=True)
-        paserr.add_argument('location',
-                            type=valid_characters,
-                            required=True,
-                            help="location field cannt be left blank or"
-                            "{error_msg},400"
-                            )
-        
-        data = paserr.parse_args()
+        """patch method:patch the location of the current user"""
+        patch_location = reqparse.RequestParser(bundle_errors=True)
+        patch_location.add_argument('location',
+                                    type=valid_location,
+                                    required=True,
+                                    help="location field cannt be left blank or"
+                                    "{error_msg},400"
+                                    )
+
+        patch_location.parse_args()
+        data = request.get_json(silent=True)
         location = data["location"]
         patched = (location, intervention_id)
-        intervention = db.findOne(intervention_id)
+        intervention = DB.findOne(intervention_id)
+        current_user = get_jwt_identity()
         if intervention:
-            db.update_intervention_location(patched)
-            return{"status": 200, "data":
-                   [{"id": intervention_id, "message":
-                     "Updated intervention's location"}]}, 200
+            check_user = (intervention_id, current_user)
+            identity = DB.check_current_user(check_user)
+            if identity:
+                DB.update_intervention_location(patched)
+                return{"status": 200, "data":
+                       [{"id": intervention_id, "message":
+                         "Updated intervention's location"}]}, 200
+            return{"message": "Incident id not associated with current account."}
         return {"status": 404,
                 "data": [{
                     "message": "intervention record does not exist."
@@ -159,37 +214,40 @@ class Updatelocation(Resource):
 
 
 class AdminUpdatesInterventiontatus(Resource):
+    """patch method for intervention types"""
+    @jwt_required
     def patch(self, intervention_id):
-        paserr = reqparse.RequestParser(bundle_errors=True)
-        paserr.add_argument('type',
-                            type=str,
-                            required=True,
-                            choices=("Intervention"),
-                            help="type field cannot be left "
-                            "blank or Bad choice: {error_msg},400"
-                            )
-        paserr.add_argument('isAdmin',
-                            type=str,
-                            required=True,
-                            choices=("True", "False"),
-                            help="Only Admin users allowed"
-                            " or Bad choice: {error_msg},400"
-                            )
-        paserr.add_argument('status',
-                            type=str,
-                            required=True,
-                            choices=("under investigation",
-                                     "rejected", "resolved"),
-                            help="status field cannot be left "
-                            "blank or Bad choice: {error_msg},400"
-                            )
-        
-        data = paserr.parse_args()
+        """only the Admin can patch the intervention type and change the 
+            status
+        """
+        patch_inter_status = reqparse.RequestParser(bundle_errors=True)
+        patch_inter_status.add_argument('type',
+                                        type=str,
+                                        required=True,
+                                        choices=("Intervention"),
+                                        help="type field cannot be left "
+                                        "blank or Bad choice: {error_msg},400"
+                                        )
+        patch_inter_status.add_argument('status',
+                                        type=str,
+                                        required=True,
+                                        choices=("under investigation",
+                                                 "rejected", "resolved"),
+                                        help="status field cannot be left "
+                                        "blank or Bad choice: {error_msg},400"
+                                        )
+
+        data = patch_inter_status.parse_args()
+        current_user = get_jwt_identity()
+        valid = DB.check_isadmin(current_user)
+        if valid is False:
+            return {"status": 403, "message": "Only Admin User Has "
+                    "access this route."}, 403
         status = data["status"]
         patched = (status, intervention_id)
-        intervention = db.findOne(intervention_id)
+        intervention = DB.findOne(intervention_id)
         if intervention:
-            db.update_intervention_status(patched)
+            DB.update_intervention_status(patched)
             return{"status": 200, "data":
                    [{"id": intervention_id, "message":
                      "Updated intervention record status"}]}, 200
@@ -200,37 +258,38 @@ class AdminUpdatesInterventiontatus(Resource):
 
 
 class AdminupdateRedflagstatus(Resource):
+    """patch method for the redflag type"""
+    @jwt_required
     def patch(self, intervention_id):
-        paserr = reqparse.RequestParser(bundle_errors=True)
-        paserr.add_argument('type',
-                            type=str,
-                            required=True,
-                            choices=("Redflag"),
-                            help="type field cannot be left "
-                            "blank or Bad choice: {error_msg},400"
-                            )
-        paserr.add_argument('isAdmin',
-                            type=str,
-                            required=True,
-                            choices=("True", "False"),
-                            help="Only Admin users allowed "
-                            "or Bad choice: {error_msg},400"
-                            )
-        paserr.add_argument('status',
-                            type=str,
-                            required=True,
-                            choices=("under investigation",
-                                     "rejected", "resolved"),
-                            help="status field cannot be left "
-                            "blank or Bad choice: {error_msg},400"
-                            )
-        
-        data = paserr.parse_args()
+        """Admin user can change the redflag type status"""
+        patch_redflag = reqparse.RequestParser(bundle_errors=True)
+        patch_redflag.add_argument('type',
+                                   type=str,
+                                   required=True,
+                                   choices=("Redflag"),
+                                   help="type field cannot be left "
+                                   "blank or Bad choice: {error_msg},400"
+                                   )
+        patch_redflag.add_argument('status',
+                                   type=str,
+                                   required=True,
+                                   choices=("under investigation",
+                                            "rejected", "resolved"),
+                                   help="status field cannot be left "
+                                   "blank or Bad choice: {error_msg},400"
+                                   )
+
+        data = patch_redflag.parse_args()
+        current_user = get_jwt_identity()
+        valid = DB.check_isadmin(current_user)
+        if valid is False:
+            return {"status": 403, "message": "Only Admin User Has "
+                    " access this route."}, 403
         status = data["status"]
         patched = (status, intervention_id)
-        intervention = db.findOne(intervention_id)
+        intervention = DB.findOne(intervention_id)
         if intervention:
-            db.update_redflag_status(patched)
+            DB.update_redflag_status(patched)
             return{"status": 200, "data":
                    [{"id": intervention_id, "message":
                      "Updated redflag record status"}]}, 200
@@ -238,72 +297,3 @@ class AdminupdateRedflagstatus(Resource):
                 "data": [{
                     "message": "intervention record does not exist."
                 }]}, 404
-
-
-class Signup(Resource):
-    def post(self):
-        parser = reqparse.RequestParser(bundle_errors=True)
-
-        parser.add_argument("username",
-                            type=str,
-                            required=True,
-                            help="Username field is required.")
-        parser.add_argument("password",
-                            type=str,
-                            required=True,
-                            help="Password field is required.")
-        parser.add_argument("email",
-                            type=str,
-                            required=True,
-                            help="Email field is required.")
-        parser.add_argument("firstname",
-                            type=str,
-                            help="Firstname field is optional.")
-        parser.add_argument("lastname",
-                            type=str,
-                            help="Lastname field is optional.")
-        parser.add_argument("phoneNumber",
-                            type=int,
-                            help="Phone number field is optional.")
-        parser.add_argument("othername",
-                            type=str,
-                            help="othername field is optional.")
-
-        data = parser.parse_args()
-        username, password = data["username"], data["password"]
-        pw_hash = generate_password_hash(password)
-        email = data["email"]
-        firstname = data["firstname"]
-        lastname = data["lastname"]
-        valid_data = db.validate_user_details(username, email)
-        if valid_data:
-            access_token = create_access_token(identity=username)
-            posted = (data['firstname'], data['lastname'],
-                      data['othername'], email, data['phoneNumber'],
-                      username, pw_hash)
-            db.save_user_details(posted)
-            return{"status": 201, "data":
-                   [{"token": access_token, "user": data}]}, 201
-        return {"message": "check your sign up credentials .Signup failed"}, 400
-
-
-class Login(Resource):
-    def post(self):
-        parser = reqparse.RequestParser(bundle_errors=True)
-
-        parser.add_argument("username",
-                            type=str,
-                            required=True,
-                            help="Username field is required.")
-        parser.add_argument("password",
-                            type=str,
-                            required=True,
-                            help="Password field is required.")
-        data = parser.parse_args()
-        username, password = data["username"], data["password"]
-        valid_login = db.login_user(username, password)
-        if valid_login:
-            access_token = create_access_token(identity=username)
-            return{"status": 200, "data":
-                   [{"token": access_token, "user": data}]}, 200
-        return {"message": "Bad credentials.Login failed"}, 400
