@@ -12,6 +12,7 @@ def create_app():
     app = Flask(__name__)
     app.register_blueprint(v2)
     app.config['JWT_SECRET_KEY'] = 'make nakuru trap again'
+    app.config['PROPAGATE_EXCEPTIONS'] = True
     jwt = JWTManager(app)
     heroku = Heroku(app)
     return app
