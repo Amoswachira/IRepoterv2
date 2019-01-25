@@ -28,21 +28,21 @@ class RedFlagTestCase(unittest.TestCase):
         self.client = self.app.test_client()
         self.data = {
             "type": "Redflag",
-            "location":"13N,67E",
+            "location":"-1.59,67.8",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df"
         }
         self.data2 = {
             "type": "Redflag",
-            "location":"13N,67E",
+            "location":"-1.59,67.8",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df"
         }
         self.data3 = {
             "type": "Intervention",
-            "location": "13N,67E",
+            "location": "-1.59,67.8",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df",
@@ -50,7 +50,7 @@ class RedFlagTestCase(unittest.TestCase):
         }
         self.data4 = {
             "type": "Redflag",
-            "location": "13N,67E",
+            "location": "-1.59,67.8",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df",
@@ -58,14 +58,14 @@ class RedFlagTestCase(unittest.TestCase):
         }
         self.data5 = {
             "type": "Redflag",
-            "location": "13N,67E",
+            "location": "-1.59,67.8",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df"
         }
         self.data6 = {
             "type": "Redflag",
-            "location": "13N,67E",
+            "location": "-1.59,67.8",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df",
@@ -73,7 +73,7 @@ class RedFlagTestCase(unittest.TestCase):
         }
         self.data7 = {
             "type": "Intervention",
-            "location": "13N,67E",
+            "location": "-1.59,67.8",
             "Images": "Images",
             "Videos": "Videos",
             "comment": "df",
@@ -153,7 +153,7 @@ class RedFlagTestCase(unittest.TestCase):
         response2 = self.client.patch(
             URL_LOCATION, headers={'Content-Type': 'application/json'
             , "Authorization": self.access}, data=json.dumps({
-                "location": "13N,67E"
+                "location": "-1.59,67.8"
             })
         )
         result = json.loads(response2.data)
