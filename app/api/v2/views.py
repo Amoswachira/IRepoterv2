@@ -31,9 +31,9 @@ def valid_characters(value):
 def valid_location(value):
     '''check if the location is valid
     '''
-    if not re.match(r'^[0-9]{1,2}[NS],[0-9]{1,2}[EW]$', value):
+    if not re.match(r'^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$', value):
         raise ValueError(" ensure you location formatted as a "
-                         "latitude-longitude coordinate e.g '12N,67E'")
+                         "latitude-longitude coordinate e.g +90.0, -127.554334")
 
 
 # implement validation using reqparse
